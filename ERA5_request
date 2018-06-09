@@ -7,6 +7,8 @@ server.retrieve({
     "dataset": "era5",
     "date": "2008-01-01/to/2008-01-31"
     "expver": "1",
+    "format": "netcdf",
+    "area": "42/-125/32/-115",
     "levtype": "sfc",
     "number": "0",
     "param": "168.128/167.128/134.128/228.128/165.128/166.128/66.128",
