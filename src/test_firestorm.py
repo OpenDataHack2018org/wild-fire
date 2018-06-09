@@ -12,6 +12,11 @@ class MyTest(unittest.TestCase):
         fs.addDailyArea(20, day=1)
         self.assertEqual(fs.area, [500,20])
 
+    def test_addDailyLocation(self):
+        fs = firestorm.FireStorm(100, (44, 20), 0, initialArea=500)
+        fs.addDailyLocation((44,19))
+        self.assertEqual(fs.locations, [(44,20),(44,19)])
+
     def test_getTimeLen(self):
         fs = firestorm.FireStorm(100, (44, -120), 0, initialArea=500)
         self.assertEqual(fs.getTimeLen(), 1)
