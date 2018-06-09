@@ -18,7 +18,7 @@ class FireStorm(object):
         self.startLoc = startLoc
         self.startTime = startTime
         if initialArea:
-            self.area=[initalArea]
+            self.area=[initialArea]
         else:
             self.area = []
 
