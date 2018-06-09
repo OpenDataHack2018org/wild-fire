@@ -2,9 +2,9 @@
 Class to describe individual fire storms
 Has the following properties:
 stormId: integer number > 0
-startLoc: (lat, lon) of initial centre of fire
 startTime: time of start of fire
 timeLen: lifetime of fire (days)
+locations: array of fire centre locations
 area: array of daily area m^2
 maxArea: largest area of fire m^2
 rate: array of daily growth rates m^2/day
@@ -15,7 +15,7 @@ class FireStorm(object):
     def __init__(self, stormId, startLoc, startTime,
                  initialArea=None):
         self.stormId = stormId
-        self.startLoc = startLoc
+        self.locations = [startLoc]
         self.startTime = startTime
         if initialArea:
             self.area=[initialArea]
@@ -27,6 +27,12 @@ class FireStorm(object):
             self.area[day] = area
         else:
             self.area.append(area)
+
+    def addDailyLocation(self, location, day=None):
+        if day:
+            self.locations[day] = location
+        else:
+            self.locations.append(location)
 
     def getTimeLen(self):
         if len(self.area) > 0:
