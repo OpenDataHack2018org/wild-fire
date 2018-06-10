@@ -89,7 +89,7 @@ def getSurroundingFires(fire, array, freeLocs, offset=1):
                 pass
     return extraArea
 
-def calcAreas(fireList, array, freeLocs, gridBoxArea=31*31):
+def calcAreas(fireList, array, freeLocs, gridBoxArea=11*11):
     """ Calculate area of each fire masking as summing """
     sums = []
     for fire in fireList:
@@ -153,7 +153,7 @@ def removeShortLivedFire(fireList, minLen=2):
             newList.append(fire)
     return newList
 
-def saveGrowingFireStorms(fireList, filename, threshRate=3900):
+def saveGrowingFireStorms(fireList, filename, threshRate=490):
     """ csv file time, i, j, rate """
     with open(filename, 'w') as fh:
         for fire in finalList[::-1]:
