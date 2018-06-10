@@ -25,9 +25,25 @@ def loadRawXData(year):
             variables[variable] = ncdata.variables[variable][day0:day0+ndays]
     return variables
 
+def loadXData(year):
+    """ Load csv files """
+    variableLs = ['sp', 't2m', 'd2md', 's10', 'tp', 'lai_lv', 'swvl1']
+    varDict = {}
+    for v in variableLs:
+        varDict[v] = []
+    vnames = "_".join([v for v in variableLs])
+    datafile = '../data/'+vnames+'_%i.csv'%year
+    with open(datafile, 'r') as fh:
+        for line in fh.readlines():
+            data = line.split(',')
+            for v,s in zip(variableLs, data):
+                varDict[v].append(float(s))
+    return varDict
+
 def loadRawYData(year=2008):
     """ Load in fires for year """
-    datafile = '/Users/Leon/pycharm/datahack/wild-fire/data/rates_y%i.csv' % year
+    #datafile = '/Users/Leon/pycharm/datahack/wild-fire/data/rates_y%i.csv' % year
+    datafile = '/Users/Leon/pycharm/datahack/wild-fire/data/rates_t150_y%i.csv' % year
     fires = []
     with open(datafile, 'r') as fh:
         for line in fh.readlines():
@@ -73,7 +89,8 @@ def getVarForAllFires(fireList, variables, dayOffset=0):
 def saveVarsCSV(variables, allVars, year):
     """ Save vars as CSV """
     vnames = "_".join([v for v in variables])
-    filename = vnames+'_%i.csv'%year
+    filename = vnames+'_t150_%i.csv'%year
+    #filename = vnames+'_%i.csv'%year
     with open(filename, 'w') as fh:
         for varsOut in allVars:
             fh.write(", ".join([ '%9.6e'%var for var in varsOut ])+'\n')
@@ -84,6 +101,6 @@ if __name__ == '__main__':
     for dayOffset in range(0, 3653, 366):
         variables = loadRawXData(year)
         fires = loadRawYData(year)
-        allVars = getVarForAllFires(fires, variables, dayOffset=dayOffset)
+        allVars = getVarForAllFires(fires, variables, dayOffset=-1*dayOffset)
         saveVarsCSV(variables, allVars, year)
         year += 1

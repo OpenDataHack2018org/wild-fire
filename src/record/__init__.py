@@ -153,7 +153,7 @@ def removeShortLivedFire(fireList, minLen=2):
             newList.append(fire)
     return newList
 
-def saveGrowingFireStorms(fireList, filename, threshRate=490):
+def saveGrowingFireStorms(fireList, filename, threshRate=150):
     """ csv file time, i, j, rate """
     with open(filename, 'w') as fh:
         for fire in finalList[::-1]:
@@ -193,5 +193,5 @@ if __name__ == '__main__':
                     fireList.extend(newList)
         fireList.extend(poppedFires)
         finalList = removeShortLivedFire(fireList)
-        saveGrowingFireStorms(finalList, 'rates_y%i.csv'%year)
+        saveGrowingFireStorms(finalList, 'rates_t150_y%i.csv'%year)
         year += 1
