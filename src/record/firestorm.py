@@ -62,3 +62,14 @@ class FireStorm(object):
             return max(rate)
         else:
             return None
+
+    def __str__(self):
+        areas = [ str(area) for area in self.getAreaList() ]
+        areaStr = " ".join(areas)
+        age = self.getTimeLen()
+        if len(areas) < 1:
+            age = 0
+        loc = self.locations[0]
+        fireStr = "Fire %i: Birth: %i Loc: %i %i Age: %i Areas:" % (self.stormId, self.startTime,
+                                                                    loc[0], loc[1], age)
+        return fireStr+areaStr
