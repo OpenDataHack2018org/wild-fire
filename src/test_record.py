@@ -61,6 +61,14 @@ class MyTest(unittest.TestCase):
         self.assertEqual(fireList[0].getAreaList()[0], 2)
         self.assertEqual(fireList[1].getAreaList()[0], 6)
 
+    def test_calcAreas_empty(self):
+        array = np.array([[1, 2, 1, 1, 0],
+                          [0, 0, 0, 1, 1],
+                          [0, 2, 1, 0, 0]])
+        freeLocs = record.initLogicalArray(array.shape)
+        fl = record.calcAreas([], array, freeLocs)
+        self.assertEqual(fl, [])
+
     def test_checkFirePersistence(self):
         array = np.array([[1, 2, 1, 1, 0],
                           [0, 0, 0, 0, 0],
@@ -70,6 +78,15 @@ class MyTest(unittest.TestCase):
         fire3 = firestorm.FireStorm(2, (2, 4), 1)
         popList = record.checkFirePersistence([fire1, fire2, fire3], array)
         self.assertEqual(popList, [2])
+
+    def test_removeShortLivedFires(self):
+        fire1 = firestorm.FireStorm(1, (0, 1), 1, initialArea=10)
+        fire2 = firestorm.FireStorm(2, (2, 1), 1, initialArea=10)
+        fire3 = firestorm.FireStorm(3, (2, 4), 1)
+        fire1.addDailyArea(34)
+        fireList = [fire1, fire2, fire3]
+        newList = record.removeShortLivedFire(fireList, minLen=2)
+        self.assertEqual(newList, [fire1])
 
 if __name__ == '__main__':
     unittest.main()
