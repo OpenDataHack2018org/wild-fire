@@ -144,30 +144,54 @@ def checkFirePersistence(fireList, array):
                 popList.append(ind)
     return popList
 
+def removeShortLivedFire(fireList, minLen=2):
+    """ Return a list with a short lived fires removed """
+    newList = []
+    for fire in fireList:
+        age = fire.getTimeLen()
+        if age >= minLen:
+            newList.append(fire)
+    return newList
+
+def saveGrowingFireStorms(fireList, filename, threshRate=3900):
+    """ csv file time, i, j, rate """
+    with open(filename, 'w') as fh:
+        for fire in finalList[::-1]:
+            if fire.getMaxRate() > threshRate:
+                i,j = fire.locations[0]
+                t0 = fire.startTime
+                rates = fire.getRateList()
+                for it, rate in enumerate(rates):
+                    if rate > threshRate:
+                        fh.write("%i, %i, %i, %i\n" % (it+t0, i, j, rate))
+
 
 if __name__ == '__main__':
-    day0 = 179
-    ndays = 5
-    array = loadTestData(day0=day0, ndays=ndays)
-    freeLocs = initLogicalArray(array[0].shape)
-    nextId = 1
-    fireList = []
-
-    poppedFires = []
-    for iday in range(0, ndays):
+    year = 2008
+    #day0 = 1    #171
+    for day0 in range(0, 3653, 366):
+        ndays = 357     #5
+        array = loadTestData(day0=day0, ndays=ndays)
         freeLocs = initLogicalArray(array[0].shape)
-        if len(fireList) < 1:
-            fireList, nextId = findMaxima(array[iday], freeLocs, day0+iday, nextId)
-            fireList = calcAreas(fireList, array[iday], freeLocs)
-        else:
-            popList = checkFirePersistence(fireList, array[iday])
-            for popper in popList[::-1]:
-                poppedFires.append(fireList.pop(popper))
-            fireList = calcAreas(fireList, array[iday], freeLocs)
-            newList, nextId = findMaxima(array[iday], freeLocs, day0+iday, nextId)
-            if len(newList)>0:
-                newList = calcAreas(newList, array[iday], freeLocs)
-                fireList.extend(newList)
-    fireList.extend(poppedFires)
-    for fire in fireList[::-1]:
-        print fire
+        nextId = 1
+        fireList = []
+
+        poppedFires = []
+        for iday in range(0, ndays):
+            freeLocs = initLogicalArray(array[0].shape)
+            if len(fireList) < 1:
+                fireList, nextId = findMaxima(array[iday], freeLocs, day0+iday, nextId)
+                fireList = calcAreas(fireList, array[iday], freeLocs)
+            else:
+                popList = checkFirePersistence(fireList, array[iday])
+                for popper in popList[::-1]:
+                    poppedFires.append(fireList.pop(popper))
+                fireList = calcAreas(fireList, array[iday], freeLocs)
+                newList, nextId = findMaxima(array[iday], freeLocs, day0+iday, nextId)
+                if len(newList)>0:
+                    newList = calcAreas(newList, array[iday], freeLocs)
+                    fireList.extend(newList)
+        fireList.extend(poppedFires)
+        finalList = removeShortLivedFire(fireList)
+        saveGrowingFireStorms(finalList, 'rates_y%i.csv'%year)
+        year += 1
