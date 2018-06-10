@@ -1,6 +1,12 @@
 """
 Module with functions to record
 areas and lifetimes of fires
+
+Note that the FireStorm class has
+the capability to have a new location
+for every day, but this module assumes
+fires are stationary (moving one gridbox
+is fine)
 """
 import numpy as np
 import firestorm
@@ -40,7 +46,8 @@ def isMaximum(array, i, j):
     joffs = [ 1, 1, 1, 0, -1,-1,-1, 0]
     for io,jo in zip(ioffs, joffs):
         try:
-            if array[i,j] < array[i+io,j+jo]:
+            positives = (i + io >= 0) and (j + jo >= 0)
+            if positives and ( array[i,j] < array[i+io,j+jo] ):
                 return False
         except IndexError:
             pass
@@ -50,8 +57,8 @@ def findMaxima(array, freeLocs, time, nextId):
     """ Return list of firestorms from uncounted regions """
     shape = array.shape
     fireList = []
-    for i in range(shape[1]):
-        for j in range(shape[0]):
+    for i in range(shape[0]):
+        for j in range(shape[1]):
             if freeLocs[i,j] and array[i,j]>FIREMIN:
                 if isMaximum(array, i, j):
                     fireList.append(
@@ -61,3 +68,106 @@ def findMaxima(array, freeLocs, time, nextId):
     removeDuplicates(fireList)
     return fireList, nextId
 
+def getSurroundingFires(fire, array, freeLocs, offset=1):
+    """ How many of surrounding boxes have fires """
+    extraArea = 0
+    i = fire.locations[0][0]
+    j = fire.locations[0][1]
+    for jo in range(-1*offset, offset+1):
+        if abs(jo) == offset:
+            ioffs = range(-1*offset, offset+1)
+        else:
+            ioffs = [-1*offset, offset]
+        for io in ioffs:
+            try:
+                positives = (i+io >= 0) and (j+jo >= 0)
+                if positives and freeLocs[i+io, j+jo] and \
+                        array[i+io, j+jo]>FIREMIN:
+                    freeLocs[i+io, j+jo] = False
+                    extraArea += 1
+            except IndexError:
+                pass
+    return extraArea
+
+def calcAreas(fireList, array, freeLocs, gridBoxArea=31*31):
+    """ Calculate area of each fire masking as summing """
+    sums = []
+    for fire in fireList:
+        i = fire.locations[0][0]
+        j = fire.locations[0][1]
+        #Original location of fire may not be on fire...
+        if array[i,j] > FIREMIN:
+            freeLocs[i,j] = False
+            sums.append(gridBoxArea)
+        else:
+            sums.append(0)
+    finalFires = []
+    finalSums = []
+    maxOffs = max(array.shape[0], array.shape[1])
+    for offset in range(1, maxOffs):
+        popList=[]
+        for i, fire in enumerate(fireList):
+            extraArea = getSurroundingFires(fire, array, freeLocs, offset=offset)
+            if extraArea > 0:
+                sums[i] += gridBoxArea * extraArea
+            else:
+                popList.append(i)
+        for popper in popList[::-1]:
+            finalFires.append(fireList.pop(popper))
+            finalSums.append(sums.pop(popper))
+        if len(fireList) == 0:
+            break
+
+    for fire, area in zip(finalFires, finalSums):
+        fire.addDailyArea(area)
+    return finalFires
+
+def checkFirePersistence(fireList, array):
+    """ See if fire still there """
+    popList = []
+    for ind, fire in enumerate(fireList):
+        i = fire.locations[0][0]
+        j = fire.locations[0][1]
+        if array[i,j] < FIREMIN:
+            #Allow fire to be within one gridbox of original location
+            ioffs = [-1, 0, 1, -1, -1, 0, 1, 1]
+            joffs = [1, 1, 1, 0, -1, -1, -1, 0]
+            failed = True
+            for io, jo in zip(ioffs, joffs):
+                try:
+                    positives = (i + io >= 0) and (j + jo >= 0)
+                    if positives and (array[i+io, j+jo] > FIREMIN):
+                        failed = False
+                except IndexError:
+                    pass
+            if failed:
+                popList.append(ind)
+    return popList
+
+
+if __name__ == '__main__':
+    day0 = 179
+    ndays = 5
+    array = loadTestData(day0=day0, ndays=ndays)
+    freeLocs = initLogicalArray(array[0].shape)
+    nextId = 1
+    fireList = []
+
+    poppedFires = []
+    for iday in range(0, ndays):
+        freeLocs = initLogicalArray(array[0].shape)
+        if len(fireList) < 1:
+            fireList, nextId = findMaxima(array[iday], freeLocs, day0+iday, nextId)
+            fireList = calcAreas(fireList, array[iday], freeLocs)
+        else:
+            popList = checkFirePersistence(fireList, array[iday])
+            for popper in popList[::-1]:
+                poppedFires.append(fireList.pop(popper))
+            fireList = calcAreas(fireList, array[iday], freeLocs)
+            newList, nextId = findMaxima(array[iday], freeLocs, day0+iday, nextId)
+            if len(newList)>0:
+                newList = calcAreas(newList, array[iday], freeLocs)
+                fireList.extend(newList)
+    fireList.extend(poppedFires)
+    for fire in fireList[::-1]:
+        print fire
